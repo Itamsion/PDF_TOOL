@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0}[hidden]{display:none!important}</style>
+<title>מתמונות ל-PDF</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Secular+One&display=swap">
+<style>
+:root {
+  --paper: #F1F5FB;
+  --grid: rgba(45, 80, 190, 0.09);
+  --surface: #FFFFFF;
+  --surface-2: #E6ECF7;
+  --ink: #131838;
+  --muted: #55608A;
+  --line: rgba(19, 24, 56, 0.14);
+  --accent: #2340C8;
+  --on-accent: #FFFFFF;
+  --danger: #C2304B;
+  --scrim: rgba(8, 11, 26, 0.92);
+  --font-display: "Secular One", "Arial Hebrew", Arial, sans-serif;
+  --font-body: "Assistant", system-ui, "Arial Hebrew", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0E1320;
+    --grid: rgba(140, 170, 255, 0.07);
+    --surface: #171E30;
+    --surface-2: #222B42;
+    --ink: #E8ECFB;
+    --muted: #9AA5CB;
+    --line: rgba(222, 229, 255, 0.15);
+    --accent: #8FA3FF;
+    --on-accent: #0E1320;
+    --danger: #FF8EA2;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 120px;
+  min-height: 100%;
+}
+.wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+header h1 { font-family: var(--font-display); font-weight: 400; font-size: 2.2rem; line-height: 1.1; margin: 0 0 6px; text-wrap: balance; }
+header p { margin: 0; color: var(--muted); max-width: 42ch; }
+.add { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 52px; padding: 10px 14px;
+  border: 1.5px solid var(--ink); border-radius: 10px;
+  background: var(--surface); color: var(--ink);
+  font: 700 1rem/1.2 var(--font-body);
+  cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+}
+.btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.btn:active { transform: translateY(1px); }
+.btn[disabled] { opacity: 0.45; cursor: not-allowed; }
+.btn svg, .ibtn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.pick { position: relative; overflow: hidden; }
+.pick:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
+.cover { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; font-size: 0; }
+#status { margin: -8px 0 0; min-height: 1.5em; color: var(--muted); font-size: 0.95rem; }
+#status.err { color: var(--danger); }
+.sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.sec-head h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.35rem; margin: 0; }
+.sec-head .n { color: var(--muted); font-family: var(--font-body); font-size: 1rem; }
+.link { background: none; border: 0; padding: 8px 0; color: var(--muted); font: 600 0.95rem var(--font-body); text-decoration: underline; cursor: pointer; }
+.link.warn { color: var(--danger); }
+.grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (min-width: 560px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 760px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.thumbwrap { position: relative; }
+.thumbbtn { display: block; width: 100%; aspect-ratio: 3 / 4; padding: 0; border: 0; border-radius: 6px; background: var(--surface-2); cursor: zoom-in; overflow: hidden; }
+.thumbbtn canvas { width: 100%; height: 100%; object-fit: contain; display: block; }
+.badge { position: absolute; top: 6px; inset-inline-start: 6px; background: var(--ink); color: var(--paper); font: 700 0.8rem/1 var(--font-body); padding: 5px 8px; border-radius: 6px; pointer-events: none; font-variant-numeric: tabular-nums; }
+.del { position: absolute; top: 4px; inset-inline-end: 4px; width: 36px; height: 36px; border-radius: 8px; border: 0; background: var(--surface); color: var(--danger); display: grid; place-items: center; cursor: pointer; box-shadow: 0 0 0 1px var(--line); }
+.del svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tools { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.ibtn { height: 40px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); display: grid; place-items: center; cursor: pointer; padding: 0; }
+.ibtn[disabled] { opacity: 0.3; cursor: default; }
+.ibtn:active:not([disabled]) { background: var(--surface-2); }
+.empty { border: 2px dashed var(--line); border-radius: 12px; padding: 22px 18px; background: var(--surface); display: flex; gap: 18px; align-items: center; }
+.empty svg { width: 84px; flex: none; }
+.empty p { margin: 0 0 6px; }
+.empty ul { margin: 0; padding-inline-start: 18px; color: var(--muted); font-size: 0.95rem; }
+.opts { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 18px; }
+.opts h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.35rem; margin: 0; }
+fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+legend { font-weight: 700; padding: 0; margin-bottom: 8px; }
+.seg { display: flex; border: 1.5px solid var(--ink); border-radius: 10px; overflow: hidden; }
+.seg label { flex: 1; min-width: 0; text-align: center; padding: 11px 6px; font-weight: 600; cursor: pointer; border-inline-start: 1px solid var(--line); background: var(--surface); }
+.seg label:first-of-type { border-inline-start: 0; }
+.seg input:checked + label { background: var(--accent); color: var(--on-accent); }
+.seg input:focus-visible + label { outline: 3px solid var(--accent); outline-offset: -3px; }
+.hint { margin: 8px 0 0; color: var(--muted); font-size: 0.9rem; }
+.namefield { display: flex; flex-direction: column; gap: 8px; }
+.namefield label { font-weight: 700; }
+.namefield input { width: 100%; min-height: 48px; padding: 8px 12px; border: 1.5px solid var(--ink); border-radius: 10px; background: var(--paper); color: var(--ink); font: 400 1rem var(--font-body); }
+.bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  background: var(--surface); border-top: 1px solid var(--line);
+  padding-top: 12px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.bar-in { max-width: 760px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+.bar-info { flex: 1; min-width: 0; line-height: 1.25; }
+.bar-info strong { display: block; font-variant-numeric: tabular-nums; }
+.bar-info span { color: var(--muted); font-size: 0.88rem; }
+.bar .btn { min-width: 150px; }
+.preview { position: fixed; inset: 0; z-index: 40; background: var(--scrim); color: #fff; display: flex; flex-direction: column;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px)); gap: 10px; }
+.pv-top { display: flex; align-items: center; gap: 8px; }
+.pv-top .t { flex: 1; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pv-top .ibtn { width: 48px; height: 48px; background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.25); color: #fff; }
+.pv-stage { flex: 1; min-height: 0; display: grid; place-items: center; }
+.pv-stage canvas { max-width: 100%; max-height: 100%; width: auto; height: auto; background: #fff; box-shadow: 0 6px 30px rgba(0,0,0,0.5); }
+.parts { display: flex; flex-direction: column; gap: 8px; margin-top: -8px; }
+.parts p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+.part { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 8px 8px 12px; }
+.part .pi { flex: 1; min-width: 0; line-height: 1.3; font-variant-numeric: tabular-nums; }
+.part .pi span { display: block; color: var(--muted); font-size: 0.88rem; }
+.part .btn { min-height: 44px; }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-cam" viewBox="0 0 24 24"><path d="M3.5 8h3.2l1.5-2.2h7.6L17.3 8h3.2v11h-17z"/><circle cx="12" cy="13.3" r="3.6"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 15.5V4.5M7.5 9L12 4.5 16.5 9"/><path d="M4.5 14v5.5h15V14"/></symbol>
+  <symbol id="i-cw" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v4.5h-4.5"/></symbol>
+  <symbol id="i-ccw" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.6-5.9"/><path d="M4 4v4.5h4.5"/></symbol>
+  <symbol id="i-r" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+  <symbol id="i-l" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12M10 11v5M14 11v5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-pdf" viewBox="0 0 24 24"><path d="M7 3.5h7l4 4v13H7z"/><path d="M14 3.5v4h4"/><path d="M9.5 15h5M9.5 17.5h5"/></symbol>
+</svg>
+
+<div class="wrap" dir="rtl" lang="he">
+  <header>
+    <h1>מתמונות ל-PDF</h1>
+    <p>צלמו דפי פתרון בכתב יד, סדרו אותם לפי הסדר וקבלו קובץ PDF אחד.</p>
+  </header>
+
+  <section>
+    <div class="add">
+      <div class="btn primary pick"><svg><use href="#i-cam"/></svg>צלם עמוד<input id="cam" class="cover" type="file" accept="image/*" capture="environment" aria-label="צלם עמוד"></div>
+      <div class="btn pick"><svg><use href="#i-up"/></svg>העלה תמונות<input id="gal" class="cover" type="file" accept="image/*,.heic,.heif" multiple aria-label="העלה תמונות"></div>
+    </div>
+  </section>
+  <p id="status" role="status" aria-live="polite"></p>
+  <div class="parts" id="parts" hidden></div>
+
+  <section>
+    <div class="sec-head">
+      <h2>הדפים <span class="n" id="count"></span></h2>
+      <button type="button" class="link" id="clear" hidden>נקה הכל</button>
+    </div>
+    <ul class="grid" id="grid"></ul>
+    <div class="empty" id="empty">
+      <svg viewBox="0 0 84 112" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--muted)" aria-hidden="true">
+        <rect x="3" y="3" width="78" height="106" rx="4" stroke-dasharray="6 5"/>
+        <path d="M16 22c6-5 10 4 16-1s9 2 14-1M16 36c7-4 9 3 15-1s11 3 16 0M16 50c5-3 9 2 14-1M16 64c6-4 10 3 16-1s8 2 12 0"/>
+        <path d="M52 78l10 14M62 78L52 92" stroke="var(--accent)"/>
+      </svg>
+      <div>
+        <p><strong>עוד אין דפים.</strong> צלמו את הפתרון דף אחרי דף, או העלו כמה תמונות יחד, למשל סריקות מאפליקציית הסריקה של הטלפון.</p>
+        <ul>
+          <li>צלמו ישר מלמעלה ובאור טוב.</li>
+          <li>תמונות שכבר נסרקו נראות נקיות. אפשר לבחור למטה "מקורי" כדי לא לעבד אותן שוב.</li>
+          <li>הדף מסתובב אוטומטית לפי המכשיר. אם הוא עדיין הפוך, לחצו על סיבוב.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="opts">
+    <h2>הגדרות</h2>
+    <fieldset>
+      <legend>שיפור התמונה</legend>
+      <div class="seg">
+        <input class="sr" type="radio" name="filter" id="f-doc" value="doc" checked><label for="f-doc">משופר</label>
+        <input class="sr" type="radio" name="filter" id="f-orig" value="original"><label for="f-orig">מקורי</label>
+        <input class="sr" type="radio" name="filter" id="f-bw" value="bw"><label for="f-bw">שחור-לבן</label>
+      </div>
+      <p class="hint">משופר מלבין את הנייר, מאזן צללים ומחדד את הכתב. הצבע של העט נשמר.</p>
+    </fieldset>
+    <fieldset>
+      <legend>גודל עמוד</legend>
+      <div class="seg">
+        <input class="sr" type="radio" name="size" id="s-a4" value="a4" checked><label for="s-a4">A4</label>
+        <input class="sr" type="radio" name="size" id="s-fit" value="fit"><label for="s-fit">לפי התמונה</label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>איכות</legend>
+      <div class="seg">
+        <input class="sr" type="radio" name="quality" id="q-bal" value="balanced" checked><label for="q-bal">מאוזן</label>
+        <input class="sr" type="radio" name="quality" id="q-sharp" value="sharp"><label for="q-sharp">חד (קובץ גדול)</label>
+      </div>
+    </fieldset>
+    <div class="namefield">
+      <label for="fname">שם הקובץ</label>
+      <input id="fname" type="text" autocomplete="off" spellcheck="false">
+    </div>
+  </section>
+</div>
+
+<div class="bar">
+  <div class="bar-in">
+    <div class="bar-info"><strong id="barInfo">אין עדיין דפים</strong><span id="barSub">הוסיפו תמונות כדי להתחיל</span></div>
+    <button type="button" class="btn primary" id="make" disabled><svg><use href="#i-pdf"/></svg><span id="makeTxt">צור PDF</span></button>
+  </div>
+</div>
+
+<div class="preview" id="preview" hidden role="dialog" aria-modal="true" aria-label="תצוגת דף">
+  <div class="pv-top">
+    <button type="button" class="ibtn" id="pvClose" aria-label="סגור"><svg><use href="#i-x"/></svg></button>
+    <div class="t" id="pvTitle"></div>
+    <button type="button" class="ibtn" id="pvCcw" aria-label="סובב שמאלה"><svg><use href="#i-ccw"/></svg></button>
+    <button type="button" class="ibtn" id="pvCw" aria-label="סובב ימינה"><svg><use href="#i-cw"/></svg></button>
+  </div>
+  <div class="pv-stage" id="pvStage"></div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const BASE_MAX = 2800, THUMB_MAX = 480;
+  const QUALITY = { balanced: { max: 2000, q: 0.82 }, sharp: { max: 2800, q: 0.92 } };
+  const $ = (id) => document.getElementById(id);
+  const tick = () => new Promise((r) => setTimeout(r, 0));
+
+  const pages = [];
+  const settings = { filter: 'doc', size: 'a4', quality: 'balanced' };
+  let uid = 0, busy = false, lastPdf = null, clearTimer = null;
+  let downloads = null;
+  const dlReady = (async () => {
+    try { downloads = (await (window.claude && window.claude.use ? window.claude.use('downloads') : null)) || null; } catch (e) { downloads = null; }
+  })();
+
+  (function () {
+    const d = new Date(), p = (n) => String(n).padStart(2, '0');
+    $('fname').value = 'פתרון-תרגילים-' + d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  })();
+
+  function setStatus(msg, err) {
+    const s = $('status');
+    s.textContent = msg || '';
+    s.className = err ? 'err' : '';
+  }
+  const byId = (id) => pages.find((p) => p.id === id);
+
+  function newCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+  function toBlob(c, type, q) {
+    return new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('toBlob'))), type, q));
+  }
+  async function loadBitmap(file) {
+    try { return await createImageBitmap(file, { imageOrientation: 'from-image' }); } catch (e) {}
+    try { return await createImageBitmap(file); } catch (e) {}
+    const url = URL.createObjectURL(file);
+    try { const img = new Image(); img.src = url; await img.decode(); return img; }
+    finally { URL.revokeObjectURL(url); }
+  }
+
+  function renderTo(src, rot, filter, maxLong) {
+    const sw = src.naturalWidth || src.width, sh = src.naturalHeight || src.height;
+    const swap = rot % 2 === 1;
+    const ow = swap ? sh : sw, oh = swap ? sw : sh;
+    const sc = Math.min(1, maxLong / Math.max(ow, oh));
+    const cw = Math.max(1, Math.round(ow * sc)), ch = Math.max(1, Math.round(oh * sc));
+    const c = newCanvas(cw, ch);
+    const g = c.getContext('2d', { willReadFrequently: true });
+    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+    g.fillStyle = '#fff'; g.fillRect(0, 0, cw, ch);
+    g.translate(cw / 2, ch / 2); g.rotate(rot * Math.PI / 2);
+    const dw = swap ? ch : cw, dh = swap ? cw : ch;
+    g.drawImage(src, -dw / 2, -dh / 2, dw, dh);
+    if (filter !== 'original') enhance(c, filter);
+    return c;
+  }
+
+  function enhance(c, mode) {
+    const w = c.width, h = c.height, g = c.getContext('2d', { willReadFrequently: true });
+    const sw = Math.max(8, Math.round(w / 24)), sh = Math.max(8, Math.round(h / 24));
+    const small = newCanvas(sw, sh), sg = small.getContext('2d');
+    sg.imageSmoothingQuality = 'high'; sg.drawImage(c, 0, 0, sw, sh);
+    const big = newCanvas(w, h), bg = big.getContext('2d', { willReadFrequently: true });
+    bg.imageSmoothingEnabled = true; bg.imageSmoothingQuality = 'high'; bg.drawImage(small, 0, 0, w, h);
+    const A = g.getImageData(0, 0, w, h), B = bg.getImageData(0, 0, w, h).data, d = A.data;
+    const lo = mode === 'bw' ? 70 : 35, hi = mode === 'bw' ? 200 : 225, k = 255 / (hi - lo);
+    for (let i = 0; i < d.length; i += 4) {
+      const bl = Math.max(50, 0.299 * B[i] + 0.587 * B[i + 1] + 0.114 * B[i + 2]);
+      const f = 255 / bl;
+      let r = d[i] * f, gr = d[i + 1] * f, b = d[i + 2] * f;
+      if (mode === 'bw') { r = gr = b = 0.299 * r + 0.587 * gr + 0.114 * b; }
+      d[i] = (r - lo) * k; d[i + 1] = (gr - lo) * k; d[i + 2] = (b - lo) * k;
+    }
+    g.putImageData(A, 0, 0);
+    small.width = big.width = 0;
+  }
+
+  async function makePage(file) {
+    const bmp = await loadBitmap(file);
+    const bw = bmp.naturalWidth || bmp.width, bh = bmp.naturalHeight || bmp.height;
+    if (!bw || !bh) throw new Error('empty');
+    const sc = Math.min(1, BASE_MAX / Math.max(bw, bh));
+    const w = Math.round(bw * sc), h = Math.round(bh * sc);
+    const c = newCanvas(w, h);
+    const g = c.getContext('2d');
+    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+    g.drawImage(bmp, 0, 0, w, h);
+    if (bmp.close) bmp.close();
+    const thumbBase = renderTo(c, 0, 'original', THUMB_MAX);
+    const blob = await toBlob(c, 'image/jpeg', 0.92);
+    c.width = 0;
+    const p = { id: ++uid, blob, w, h, rot: 0, thumbBase, thumb: null };
+    p.thumb = renderTo(thumbBase, 0, settings.filter, THUMB_MAX);
+    return p;
+  }
+  function refreshThumb(p) { p.thumb = renderTo(p.thumbBase, p.rot, settings.filter, THUMB_MAX); }
+
+  async function addFiles(list) {
+    const files = Array.from(list || []).filter((f) => (f.type && f.type.indexOf('image/') === 0) || /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name));
+    if (!files.length) return;
+    let ok = 0, bad = 0;
+    for (let i = 0; i < files.length; i++) {
+      setStatus('מעבד תמונה ' + (i + 1) + ' מתוך ' + files.length + '…');
+      try { pages.push(await makePage(files[i])); ok++; renderGrid(); } catch (e) { bad++; }
+      await tick();
+    }
+    lastPdf = null; renderParts(null);
+    if (bad) setStatus(bad === 1 ? 'תמונה אחת לא נטענה. אפשר לנסות לצלם אותה שוב.' : bad + ' תמונות לא נטענו. אפשר לנסות שוב.', true);
+    else setStatus(ok === 1 ? 'הדף נוסף. אפשר להמשיך לצלם.' : ok + ' דפים נוספו.');
+  }
+  $('cam').addEventListener('change', (e) => { const f = e.target.files; addFiles(f).then(() => { e.target.value = ''; }); });
+  $('gal').addEventListener('change', (e) => { const f = e.target.files; addFiles(f).then(() => { e.target.value = ''; }); });
+
+  ['dragover', 'drop'].forEach((ev) => document.addEventListener(ev, (e) => {
+    if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return;
+    e.preventDefault();
+    if (ev === 'drop') addFiles(e.dataTransfer.files);
+  }));
+
+  function icon(name) { return '<svg aria-hidden="true"><use href="#i-' + name + '"/></svg>'; }
+  function renderGrid() {
+    const grid = $('grid');
+    grid.textContent = '';
+    pages.forEach((p, i) => {
+      const li = document.createElement('li');
+      li.className = 'card';
+      li.innerHTML =
+        '<div class="thumbwrap">' +
+          '<button type="button" class="thumbbtn" data-act="open" data-id="' + p.id + '" aria-label="הצג את דף ' + (i + 1) + '"></button>' +
+          '<span class="badge">דף ' + (i + 1) + '</span>' +
+          '<button type="button" class="del" data-act="del" data-id="' + p.id + '" aria-label="מחק את דף ' + (i + 1) + '">' + icon('trash') + '</button>' +
+        '</div>' +
+        '<div class="tools">' +
+          '<button type="button" class="ibtn" data-act="ccw" data-id="' + p.id + '" aria-label="סובב שמאלה">' + icon('ccw') + '</button>' +
+          '<button type="button" class="ibtn" data-act="cw" data-id="' + p.id + '" aria-label="סובב ימינה">' + icon('cw') + '</button>' +
+          '<button type="button" class="ibtn" data-act="earlier" data-id="' + p.id + '" aria-label="הקדם דף"' + (i === 0 ? ' disabled' : '') + '>' + icon('r') + '</button>' +
+          '<button type="button" class="ibtn" data-act="later" data-id="' + p.id + '" aria-label="אחר דף"' + (i === pages.length - 1 ? ' disabled' : '') + '>' + icon('l') + '</button>' +
+        '</div>';
+      li.querySelector('.thumbbtn').appendChild(p.thumb);
+      grid.appendChild(li);
+    });
+    const n = pages.length;
+    $('count').textContent = n ? '(' + n + ')' : '';
+    $('empty').hidden = n > 0;
+    $('clear').hidden = n === 0;
+    updateBar();
+  }
+
+  function updateBar(extra) {
+    const n = pages.length;
+    $('make').disabled = busy || n === 0;
+    if (!n) { $('barInfo').textContent = 'אין עדיין דפים'; $('barSub').textContent = 'הוסיפו תמונות כדי להתחיל'; return; }
+    $('barInfo').textContent = n + (n === 1 ? ' עמוד' : ' עמודים');
+    $('barSub').textContent = extra || (settings.size === 'a4' ? 'A4' : 'לפי גודל התמונה') + ' · ' + (settings.quality === 'sharp' ? 'חד' : 'מאוזן');
+  }
+
+  $('grid').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-act]');
+    if (!b) return;
+    const id = Number(b.dataset.id), i = pages.findIndex((p) => p.id === id);
+    if (i < 0) return;
+    const act = b.dataset.act, p = pages[i];
+    if (act === 'open') { openPreview(id); return; }
+    if (act === 'cw' || act === 'ccw') { p.rot = (p.rot + (act === 'cw' ? 1 : 3)) % 4; refreshThumb(p); }
+    else if (act === 'earlier' && i > 0) { pages.splice(i - 1, 0, pages.splice(i, 1)[0]); }
+    else if (act === 'later' && i < pages.length - 1) { pages.splice(i + 1, 0, pages.splice(i, 1)[0]); }
+    else if (act === 'del') { pages.splice(i, 1); }
+    lastPdf = null; renderParts(null);
+    renderGrid();
+  });
+
+  $('clear').addEventListener('click', () => {
+    const b = $('clear');
+    if (b.dataset.armed) {
+      clearTimeout(clearTimer); delete b.dataset.armed; b.textContent = 'נקה הכל'; b.classList.remove('warn');
+      pages.length = 0; lastPdf = null; renderParts(null); renderGrid(); setStatus('');
+    } else {
+      b.dataset.armed = '1'; b.textContent = 'למחוק את כל הדפים? לחצו שוב'; b.classList.add('warn');
+      clearTimer = setTimeout(() => { delete b.dataset.armed; b.textContent = 'נקה הכל'; b.classList.remove('warn'); }, 3500);
+    }
+  });
+
+  document.querySelectorAll('input[name="filter"], input[name="size"], input[name="quality"]').forEach((el) => {
+    el.addEventListener('change', async () => {
+      settings[el.name] = el.value;
+      lastPdf = null; renderParts(null);
+      if (el.name === 'filter') { pages.forEach(refreshThumb); renderGrid(); if (pv) drawPreview(); }
+      else updateBar();
+    });
+  });
+
+  let pv = null;
+  async function openPreview(id) {
+    const p = byId(id); if (!p) return;
+    const mine = (pv = { id, bmp: null });
+    $('preview').hidden = false;
+    document.body.style.overflow = 'hidden';
+    $('pvStage').textContent = 'טוען…';
+    $('pvTitle').textContent = 'דף ' + (pages.indexOf(p) + 1) + ' מתוך ' + pages.length;
+    try {
+      const bmp = await createImageBitmap(p.blob);
+      if (pv !== mine) { bmp.close(); return; }
+      pv.bmp = bmp; drawPreview();
+    } catch (e) { $('pvStage').textContent = 'לא ניתן להציג את הדף.'; }
+  }
+  function drawPreview() {
+    if (!pv || !pv.bmp) return;
+    const p = byId(pv.id); if (!p) return closePreview();
+    const c = renderTo(pv.bmp, p.rot, settings.filter, 1500);
+    $('pvStage').replaceChildren(c);
+  }
+  function closePreview() {
+    if (pv && pv.bmp) pv.bmp.close();
+    pv = null; $('preview').hidden = true; document.body.style.overflow = '';
+  }
+  function rotatePreview(d) {
+    if (!pv) return; const p = byId(pv.id); if (!p) return;
+    p.rot = (p.rot + d) % 4; refreshThumb(p); lastPdf = null; renderParts(null); renderGrid(); drawPreview();
+  }
+  $('pvClose').addEventListener('click', closePreview);
+  $('pvCw').addEventListener('click', () => rotatePreview(1));
+  $('pvCcw').addEventListener('click', () => rotatePreview(3));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && pv) closePreview(); });
+
+  function geom(w, h) {
+    if (settings.size === 'fit') {
+      const s = 842 / Math.max(w, h);
+      return { pw: w * s, ph: h * s, x: 0, y: 0, iw: w * s, ih: h * s };
+    }
+    const land = w > h, pw = land ? 841.89 : 595.28, ph = land ? 595.28 : 841.89, m = 20;
+    const s = Math.min((pw - 2 * m) / w, (ph - 2 * m) / h), iw = w * s, ih = h * s;
+    return { pw, ph, x: (pw - iw) / 2, y: (ph - ih) / 2, iw, ih };
+  }
+  const f2 = (n) => n.toFixed(2);
+
+  function assemblePdf(imgs) {
+    const enc = new TextEncoder(), parts = [], offs = [];
+    let len = 0;
+    const push = (x) => { const u = typeof x === 'string' ? enc.encode(x) : x; parts.push(u); len += u.length; };
+    const n = imgs.length, N = 3 + 3 * n;
+    push(new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34, 0x0a, 0x25, 0xe2, 0xe3, 0xcf, 0xd3, 0x0a]));
+    offs[1] = len; push('1 0 obj\n<</Type/Catalog/Pages 2 0 R>>\nendobj\n');
+    const kids = imgs.map((_, i) => (3 + i * 3) + ' 0 R').join(' ');
+    offs[2] = len; push('2 0 obj\n<</Type/Pages/Kids [' + kids + ']/Count ' + n + '>>\nendobj\n');
+    imgs.forEach((im, i) => {
+      const pid = 3 + i * 3, cid = pid + 1, iid = pid + 2, g = geom(im.w, im.h);
+      offs[pid] = len;
+      push(pid + ' 0 obj\n<</Type/Page/Parent 2 0 R/MediaBox [0 0 ' + f2(g.pw) + ' ' + f2(g.ph) + ']/Resources <</XObject <</Im0 ' + iid + ' 0 R>>>>/Contents ' + cid + ' 0 R>>\nendobj\n');
+      const content = 'q ' + f2(g.iw) + ' 0 0 ' + f2(g.ih) + ' ' + f2(g.x) + ' ' + f2(g.y) + ' cm /Im0 Do Q';
+      offs[cid] = len;
+      push(cid + ' 0 obj\n<</Length ' + content.length + '>>\nstream\n' + content + '\nendstream\nendobj\n');
+      offs[iid] = len;
+      push(iid + ' 0 obj\n<</Type/XObject/Subtype/Image/Width ' + im.w + '/Height ' + im.h + '/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length ' + im.bytes.length + '>>\nstream\n');
+      push(im.bytes);
+      push('\nendstream\nendobj\n');
+    });
+    const xo = len;
+    let x = 'xref\n0 ' + N + '\n0000000000 65535 f \n';
+    for (let id = 1; id < N; id++) x += String(offs[id]).padStart(10, '0') + ' 00000 n \n';
+    push(x);
+    push('trailer\n<</Size ' + N + '/Root 1 0 R>>\nstartxref\n' + xo + '\n%%EOF\n');
+    return new Blob(parts, { type: 'application/pdf' });
+  }
+
+  async function buildPdf() {
+    const q = QUALITY[settings.quality], imgs = [];
+    for (let i = 0; i < pages.length; i++) {
+      const p = pages[i];
+      $('makeTxt').textContent = 'דף ' + (i + 1) + ' מתוך ' + pages.length + '…';
+      await tick();
+      const bmp = await createImageBitmap(p.blob);
+      const c = renderTo(bmp, p.rot, settings.filter, q.max);
+      bmp.close();
+      const blob = await toBlob(c, 'image/jpeg', q.q);
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      imgs.push({ w: c.width, h: c.height, bytes });
+      c.width = 0;
+    }
+    return imgs;
+  }
+
+  const LIMIT = 19 * 1048576, HARD = 20 * 1048576;
+  function packParts(imgs) {
+    const sizes = imgs.map((im) => im.bytes.length + 700);
+    const total = sizes.reduce((a, b) => a + b, 0);
+    const k = Math.max(1, Math.ceil(total / LIMIT)), target = total / k;
+    const groups = []; let cur = [], curSize = 0;
+    imgs.forEach((im, i) => {
+      if (cur.length && (curSize + sizes[i] > LIMIT || (curSize >= target && groups.length < k - 1))) { groups.push(cur); cur = []; curSize = 0; }
+      cur.push(i); curSize += sizes[i];
+    });
+    groups.push(cur);
+    return groups.map((g) => ({ from: g[0], to: g[g.length - 1], blob: assemblePdf(g.map((i) => imgs[i])) }));
+  }
+
+  const sizeText = (b) => (b / 1048576 >= 1 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB');
+  function fileName() {
+    let n = $('fname').value.replace(/[\\\/:*?"<>|]/g, '').trim() || 'פתרון-תרגילים';
+    return /\.pdf$/i.test(n) ? n : n + '.pdf';
+  }
+
+  async function fallbackSave(blob, name) {
+    const file = new File([blob], name, { type: 'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: name }); return; }
+      catch (e) { if (e && e.name === 'AbortError') throw { code: 'declined' }; }
+    }
+    const url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+  const baseName = () => fileName().replace(/\.pdf$/i, '');
+  async function saveBlob(blob, name) {
+    await dlReady;
+    try {
+      if (downloads) await downloads.save({ filename: name, data: blob });
+      else await fallbackSave(blob, name);
+      return true;
+    } catch (err) {
+      const code = err && err.code;
+      if (code === 'declined') setStatus('השמירה בוטלה. הקובץ מוכן, אפשר ללחוץ שוב כדי לשמור.');
+      else if (code === 'rate_limited') setStatus('חלון השמירה כבר פתוח. אשרו אותו או המתינו רגע ונסו שוב.', true);
+      else if (code === 'too_large') setStatus('הקובץ גדול מדי ליעד שנבחר. נסו איכות "מאוזן".', true);
+      else setStatus('השמירה נכשלה. אפשר לנסות שוב.', true);
+      return false;
+    }
+  }
+
+  function renderParts(parts) {
+    const box = $('parts');
+    box.textContent = '';
+    if (!parts || parts.length < 2) { box.hidden = true; return; }
+    box.hidden = false;
+    const note = document.createElement('p');
+    note.textContent = 'הדפים חרגו מ-20MB, לכן חולקו ל-' + parts.length + ' קבצים. שמרו כל קובץ בנפרד.';
+    box.appendChild(note);
+    parts.forEach((pt, i) => {
+      const row = document.createElement('div');
+      row.className = 'part';
+      const from = pt.from + 1, to = pt.to + 1;
+      row.innerHTML = '<div class="pi"><strong>חלק ' + (i + 1) + ' מתוך ' + parts.length + '</strong><span>' + (from === to ? 'דף ' + from : 'דפים ' + from + '–' + to) + ' · ' + sizeText(pt.blob.size) + '</span></div>' +
+        '<button type="button" class="btn primary" data-part="' + i + '">' + icon('pdf') + 'שמור</button>';
+      box.appendChild(row);
+    });
+  }
+  $('parts').addEventListener('click', async (e) => {
+    const b = e.target.closest('button[data-part]');
+    if (!b || !lastPdf) return;
+    const i = Number(b.dataset.part), pt = lastPdf.parts[i];
+    if (!pt) return;
+    b.disabled = true;
+    const ok = await saveBlob(pt.blob, baseName() + '-חלק' + (i + 1) + '.pdf');
+    b.disabled = false;
+    if (ok) setStatus('חלק ' + (i + 1) + ' מתוך ' + lastPdf.parts.length + ' נשמר.');
+  });
+
+  $('make').addEventListener('click', async () => {
+    if (busy || !pages.length) return;
+    busy = true; updateBar(); setStatus('');
+    try {
+      const key = JSON.stringify([pages.map((p) => [p.id, p.rot]), settings]);
+      if (!(lastPdf && lastPdf.key === key)) {
+        const parts = packParts(await buildPdf());
+        lastPdf = { key, parts };
+      }
+      const parts = lastPdf.parts;
+      renderParts(parts);
+      const total = parts.reduce((a, p) => a + p.blob.size, 0);
+      if (parts.some((p) => p.blob.size > HARD)) {
+        setStatus('דף אחד גדול מ-20MB. נסו איכות "מאוזן".', true);
+      } else if (parts.length > 1) {
+        setStatus('הקבצים מוכנים · ' + sizeText(total) + ' בסך הכל');
+      } else {
+        $('makeTxt').textContent = 'שומר…';
+        if (await saveBlob(parts[0].blob, fileName())) setStatus('הקובץ נשמר · ' + pages.length + ' עמודים · ' + sizeText(parts[0].blob.size));
+      }
+      updateBar(sizeText(total) + (parts.length > 1 ? ' · ' + parts.length + ' קבצים' : '') + ' · ' + (settings.size === 'a4' ? 'A4' : 'לפי התמונה'));
+    } catch (e) {
+      setStatus('יצירת הקובץ נכשלה. נסו איכות "מאוזן" או פחות דפים בכל פעם.', true);
+    } finally {
+      busy = false; $('makeTxt').textContent = 'צור PDF';
+      $('make').disabled = pages.length === 0;
+    }
+  });
+
+  renderGrid();
+})();
+</script>
+</html>
