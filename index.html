@@ -538,7 +538,7 @@ legend { font-weight: 700; padding: 0; margin-bottom: 8px; }
 
   async function fallbackSave(blob, name) {
     const file = new File([blob], name, { type: 'application/pdf' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && navigator.canShare && navigator.canShare({ files: [file] })) {
       try { await navigator.share({ files: [file], title: name }); return; }
       catch (e) { if (e && e.name === 'AbortError') throw { code: 'declined' }; }
     }
