@@ -161,7 +161,7 @@ legend { font-weight: 700; padding: 0; margin-bottom: 8px; }
     </div>
   </section>
   <p id="status" role="status" aria-live="polite"></p>
-  <div class="parts" id="parts" hidden></div>
+  <div class="parts" id="parts" hidden></div><div class="parts" id="mail" hidden></div>
 
   <section>
     <div class="sec-head">
@@ -563,7 +563,7 @@ legend { font-weight: 700; padding: 0; margin-bottom: 8px; }
     }
   }
 
-  function renderParts(parts) {
+  const IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent); function renderMail(parts){const box=$('mail');box.textContent='';if(!parts||!parts.length||parts.some(p=>p.blob.size>HARD)){box.hidden=true;return;}box.hidden=false;parts.forEach((pt,i)=>{const row=document.createElement('div');row.className='part';row.innerHTML='<div class="pi"><strong>'+(parts.length>1?'חלק '+(i+1)+' מתוך '+parts.length:'שליחה במייל')+'</strong><span>'+(IS_MOBILE?'נפתח חלון השיתוף, בחרו Gmail או אפליקציית מייל':'הקובץ יורד, ואז נפתחת הודעה חדשה לצירוף')+'</span></div><button type="button" class="btn" data-mail="'+i+'">'+icon('up')+'שלח במייל</button>';box.appendChild(row);});} $('mail').addEventListener('click',async(e)=>{const b=e.target.closest('button[data-mail]');if(!b||!lastPdf)return;const i=Number(b.dataset.mail),pt=lastPdf.parts[i];if(!pt)return;const name=baseName()+(lastPdf.parts.length>1?'-חלק'+(i+1):'')+'.pdf',subj=name.replace(/\.pdf$/i,'');const file=new File([pt.blob],name,{type:'application/pdf'});if(IS_MOBILE&&navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:subj,text:subj});}catch(err){}return;}if(!(await saveBlob(pt.blob,name)))return;const body=encodeURIComponent('מצורף הקובץ: '+name),su=encodeURIComponent(subj),row=b.closest('.part');let h=row.querySelector('.mh');if(!h){h=document.createElement('div');h.className='mh';h.style.cssText='font-size:.88rem;margin-top:4px';row.querySelector('.pi').appendChild(h);}h.innerHTML='הקובץ ירד. צרפו אותו להודעה: <a target="_blank" rel="noopener" href="https://mail.google.com/mail/?view=cm&fs=1&su='+su+'&body='+body+'">Gmail</a> · <a href="mailto:?subject='+su+'&body='+body+'">תוכנת מייל</a>';}); function renderParts(parts) { renderMail(parts);
     const box = $('parts');
     box.textContent = '';
     if (!parts || parts.length < 2) { box.hidden = true; return; }
