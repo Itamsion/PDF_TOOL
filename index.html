@@ -207,8 +207,8 @@ legend { font-weight: 700; padding: 0; margin-bottom: 8px; }
     <fieldset>
       <legend>איכות</legend>
       <div class="seg">
-        <input class="sr" type="radio" name="quality" id="q-bal" value="balanced" checked><label for="q-bal">מאוזן</label>
-        <input class="sr" type="radio" name="quality" id="q-sharp" value="sharp"><label for="q-sharp">חד (קובץ גדול)</label>
+        <input class="sr" type="radio" name="quality" id="q-bal" value="balanced"><label for="q-bal">מאוזן</label>
+        <input class="sr" type="radio" name="quality" id="q-sharp" value="sharp"><label for="q-sharp">חד</label><input class="sr" type="radio" name="quality" id="q-max" value="max" checked><label for="q-max">מקסימלי</label>
       </div>
     </fieldset>
     <div class="namefield">
@@ -238,13 +238,13 @@ legend { font-weight: 700; padding: 0; margin-bottom: 8px; }
 <script>
 (function () {
   'use strict';
-  const BASE_MAX = 2800, THUMB_MAX = 480;
-  const QUALITY = { balanced: { max: 2000, q: 0.82 }, sharp: { max: 2800, q: 0.92 } };
+  const BASE_MAX = 4000, THUMB_MAX = 480;
+  const QUALITY = { balanced: { max: 2000, q: 0.82 }, sharp: { max: 2800, q: 0.92 }, max: { max: 4000, q: 0.93 } };
   const $ = (id) => document.getElementById(id);
   const tick = () => new Promise((r) => setTimeout(r, 0));
 
   const pages = [];
-  const settings = { filter: 'doc', size: 'a4', quality: 'balanced' };
+  const settings = { filter: 'doc', size: 'a4', quality: 'max' };
   let uid = 0, busy = false, lastPdf = null, clearTimer = null;
   let downloads = null;
   const dlReady = (async () => {
@@ -324,7 +324,7 @@ legend { font-weight: 700; padding: 0; margin-bottom: 8px; }
     g.drawImage(bmp, 0, 0, w, h);
     if (bmp.close) bmp.close();
     const thumbBase = renderTo(c, 0, 'original', THUMB_MAX);
-    const blob = await toBlob(c, 'image/jpeg', 0.92);
+    const blob = await toBlob(c, 'image/jpeg', 0.95);
     c.width = 0;
     const p = { id: ++uid, blob, w, h, rot: 0, thumbBase, thumb: null };
     p.thumb = renderTo(thumbBase, 0, settings.filter, THUMB_MAX);
@@ -388,7 +388,7 @@ legend { font-weight: 700; padding: 0; margin-bottom: 8px; }
     $('make').disabled = busy || n === 0;
     if (!n) { $('barInfo').textContent = 'אין עדיין דפים'; $('barSub').textContent = 'הוסיפו תמונות כדי להתחיל'; return; }
     $('barInfo').textContent = n + (n === 1 ? ' עמוד' : ' עמודים');
-    $('barSub').textContent = extra || (settings.size === 'a4' ? 'A4' : 'לפי גודל התמונה') + ' · ' + (settings.quality === 'sharp' ? 'חד' : 'מאוזן');
+    $('barSub').textContent = extra || (settings.size === 'a4' ? 'A4' : 'לפי גודל התמונה') + ' · ' + ({ sharp: 'חד', max: 'מקסימלי' }[settings.quality] || 'מאוזן');
   }
 
   $('grid').addEventListener('click', (e) => {
